@@ -321,3 +321,19 @@ where
         flags
     }
 }
+
+/// ```compile_fail
+/// #[macro_use]
+/// extern crate enumflags2;
+///
+/// # fn main() {
+/// #[derive(EnumFlags, Copy, Clone, Debug)]
+/// #[repr(u8)]
+/// enum TestM {
+///     A = 0b001,
+///     B = 0b110,
+/// }
+/// # }
+/// ```
+#[allow(unused)]
+fn multibit_test() { }
