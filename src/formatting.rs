@@ -1,9 +1,10 @@
 use core::fmt::{self, Debug, Binary};
-use crate::{BitFlags, RawBitFlags};
+use crate::{BitFlags, BitFlag, EnumFlags};
 
 impl<T> fmt::Debug for BitFlags<T>
 where
-    T: RawBitFlags + fmt::Debug,
+    T: BitFlag + fmt::Debug,
+    T::Type: fmt::Binary + fmt::Debug,
 {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         let name = T::bitflags_type_name();
@@ -37,7 +38,7 @@ where
 
 impl<T> fmt::Binary for BitFlags<T>
 where
-    T: RawBitFlags,
+    T: BitFlag,
     T::Type: fmt::Binary,
 {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -47,7 +48,7 @@ where
 
 impl<T> fmt::Octal for BitFlags<T>
 where
-    T: RawBitFlags,
+    T: BitFlag,
     T::Type: fmt::Octal,
 {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -57,7 +58,7 @@ where
 
 impl<T> fmt::LowerHex for BitFlags<T>
 where
-    T: RawBitFlags,
+    T: BitFlag,
     T::Type: fmt::LowerHex,
 {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -67,7 +68,7 @@ where
 
 impl<T> fmt::UpperHex for BitFlags<T>
 where
-    T: RawBitFlags,
+    T: BitFlag,
     T::Type: fmt::UpperHex,
 {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
