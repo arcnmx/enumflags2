@@ -84,7 +84,7 @@
 //!
 //! [debian-snailpace]: https://www.jwz.org/blog/2016/04/i-would-like-debian-to-stop-shipping-xscreensaver/
 //! [issue]: https://github.com/NieDzejkob/enumflags2/issues/new
-#![warn(missing_docs)]
+//#![warn(missing_docs)]
 #![cfg_attr(all(not(test), not(feature = "std")), no_std)]
 
 use core::iter::FromIterator;
