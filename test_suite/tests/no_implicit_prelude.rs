@@ -15,5 +15,6 @@ pub enum Test {
 #[test]
 fn test_foo() {
     // assert!() doesn't even work in no_implicit_prelude!
-    let _ = BitFlags::<Test>::all();
+    use enumflags2::BitFlagExtConst;
+    let _ = Test::ALL;
 }

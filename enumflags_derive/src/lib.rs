@@ -190,32 +190,60 @@ fn gen_enumflags(ident: &Ident, item: &DeriveInput, data: &DataEnum)
             impl #std_path::ops::Not for #ident {
                 type Output = <Self as ::enumflags2::BitFlag>::Flags;
                 fn not(self) -> Self::Output {
-                    use ::enumflags2::{BitFlag, EnumFlags};
-                    unsafe { BitFlags::new(self.bits()).not() }
+                    use ::enumflags2::{BitFlagExt, EnumFlags};
+                    self.into_flags().not()
                 }
             }
 
             impl #std_path::ops::BitOr for #ident {
                 type Output = <Self as ::enumflags2::BitFlag>::Flags;
                 fn bitor(self, other: Self) -> Self::Output {
-                    use ::enumflags2::{BitFlag, EnumFlags};
-                    unsafe { BitFlags::new(self.bits() | other.bits())}
+                    use ::enumflags2::{BitFlagExt, EnumFlags};
+                    self.into_flags() | other
                 }
             }
 
             impl #std_path::ops::BitAnd for #ident {
                 type Output = <Self as ::enumflags2::BitFlag>::Flags;
                 fn bitand(self, other: Self) -> Self::Output {
-                    use ::enumflags2::{BitFlag, EnumFlags};
-                    unsafe { BitFlags::new(self.bits() & other.bits())}
+                    use ::enumflags2::{BitFlagExt, EnumFlags};
+                    self.into_flags() & other
                 }
             }
 
             impl #std_path::ops::BitXor for #ident {
                 type Output = <Self as ::enumflags2::BitFlag>::Flags;
                 fn bitxor(self, other: Self) -> Self::Output {
-                    use ::enumflags2::{BitFlags, EnumFlags};
-                    BitFlags::from_flag(self) ^ BitFlags::from_flag(other)
+                    use ::enumflags2::{BitFlagExt, EnumFlags};
+                    self.into_flags() ^ other
+                }
+            }
+
+            unsafe impl ::enumflags2::repr::BitFlagRepr<#ident> for #ident {
+                #[inline]
+                fn into_repr(self) -> #ty {
+                    self as #ty
+                }
+
+                #[inline]
+                fn get_repr(&self) -> #ty {
+                    *self as #ty
+                }
+
+                fn from_repr(bits: #ty) -> #std_path::result::Result<Self, #ty> {
+                    use ::enumflags2::BitFlag;
+                    use #std_path::result::Result;
+                    if bits & !Self::ALL_BITS == 0 && bits.count_ones() == 1 {
+                        // NOTE: avoid a match by relying on the invariant that
+                        //       a flag may not contain more than one bit
+                        Result::Ok(unsafe { Self::from_repr_unchecked(bits) })
+                    } else {
+                        Result::Err(bits)
+                    }
+                }
+
+                unsafe fn from_repr_unchecked(bits: #ty) -> Self {
+                    #std_path::mem::transmute(bits)
                 }
             }
 
@@ -223,22 +251,7 @@ fn gen_enumflags(ident: &Ident, item: &DeriveInput, data: &DataEnum)
                 type Type = #ty;
                 type Flags = ::enumflags2::BitFlags<Self>;
 
-                #[inline]
-                fn all() -> Self::Type {
-                    // make sure it's evaluated at compile time
-                    const VALUE: #ty = #all;
-                    VALUE
-                }
-
-                #[inline]
-                fn bits(self) -> Self::Type {
-                    self as #ty
-                }
-
-                #[inline]
-                fn into_flags(self) -> Self::Flags {
-                    ::enumflags2::BitFlags::from_flag(self)
-                }
+                const ALL_BITS: Self::Type = #all;
 
                 #[inline]
                 fn flag_list() -> &'static [Self] {
