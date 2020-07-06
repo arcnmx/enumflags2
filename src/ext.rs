@@ -1,4 +1,4 @@
-use super::{BitFlag, EnumFlags, EnumFlagsConst};
+use super::{BitFlag, EnumFlags, EnumFlagsConst, FromBitsError};
 use super::repr::BitFlagRepr;
 
 pub trait BitFlagExt
@@ -21,7 +21,7 @@ pub trait BitFlagExt
     }
 
     #[inline]
-    fn try_from_bit(bit: Self::Type) -> Result<Self, Self::Type> {
+    fn try_from_bit(bit: Self::Type) -> Result<Self, FromBitsError<Self>> {
         Self::from_repr(bit)
     }
 
@@ -32,11 +32,11 @@ pub trait BitFlagExt
 
     #[inline]
     fn from_bits(bits: Self::Type) -> Option<Self::Flags> {
-        Self::Flags::from_bits(bits)
+        Self::Flags::from_bits(bits).ok()
     }
 
     #[inline]
-    fn try_from_bits(bits: Self::Type) -> Result<Self::Flags, Self::Type> {
+    fn try_from_bits(bits: Self::Type) -> Result<Self::Flags, FromBitsError<Self>> {
         Self::Flags::from_repr(bits)
     }
 

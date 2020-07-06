@@ -1,4 +1,4 @@
-use super::BitFlag;
+use super::{BitFlag, FromBitsError};
 use core::cmp;
 use core::ops::{Not,
     BitAnd, BitOr, BitXor,
@@ -37,7 +37,7 @@ pub unsafe trait BitFlagRepr<T: BitFlag>
 {
     #[inline]
     fn into_repr(self) -> T::Type { self.get_repr() }
-    fn from_repr(repr: T::Type) -> Result<Self, T::Type>;
+    fn from_repr(repr: T::Type) -> Result<Self, FromBitsError<T>>;
     unsafe fn from_repr_unchecked(repr: T::Type) -> Self;
 
     fn get_repr(&self) -> T::Type;

@@ -118,6 +118,9 @@ pub mod _internal {
 // Internal debug formatting implementations
 mod formatting;
 
+mod fallible;
+pub use crate::fallible::FromBitsError;
+
 mod ext;
 pub use ext::*;
 
@@ -203,8 +206,8 @@ pub unsafe trait EnumFlags
 
     #[inline]
     /// Returns a BitFlags iff the bits value does not contain any illegal flags.
-    fn from_bits(bits: <Self::Flag as BitFlag>::Type) -> Option<Self> {
-        Self::from_repr(bits).ok()
+    fn from_bits(bits: <Self::Flag as BitFlag>::Type) -> Result<Self, FromBitsError<Self::Flag>> {
+        Self::from_repr(bits)
     }
 
     #[inline]
@@ -344,12 +347,15 @@ unsafe impl<T: BitFlag> BitFlagRepr<T> for BitFlags<T> {
         self.val = val;
     }
 
-    fn from_repr(repr: T::Type) -> Result<Self, T::Type> {
-        let left = repr & !T::ALL_BITS;
-        if left == T::Type::EMPTY {
+    fn from_repr(repr: T::Type) -> Result<Self, FromBitsError<T>> {
+        let invalid = repr & !T::ALL_BITS;
+        if invalid == T::Type::EMPTY {
             unsafe { Ok(Self::from_repr_unchecked(repr)) }
         } else {
-            Err(left)
+            Err(FromBitsError {
+                flags: Self::from_bits_truncate(repr),
+                invalid,
+            })
         }
     }
 }
@@ -518,7 +524,7 @@ where
     where
         I: IntoIterator<Item = B>
     {
-        it.into_iter().fold(BitFlags::empty(), |acc, flag| acc | flag)
+        it.into_iter().fold(BitFlags::empty(), |acc, flag| acc.bits_or(flag))
     }
 }
 
@@ -531,7 +537,7 @@ where
     where
         I: IntoIterator<Item = B>
     {
-        *self = it.into_iter().fold(*self, |acc, flag| acc | flag)
+        *self = it.into_iter().fold(*self, |acc, flag| acc.bits_or(flag.into()))
     }
 }
 
@@ -539,11 +545,11 @@ where
 mod impl_serde {
     use serde::{Serialize, Deserialize};
     use serde::de::{Error, Unexpected};
-    use super::{BitFlags, RawBitFlags};
+    use super::{BitFlags, BitFlag, EnumFlags};
 
     impl<'a, T> Deserialize<'a> for BitFlags<T>
     where
-        T: RawBitFlags,
+        T: BitFlag,
         T::Type: Deserialize<'a> + Into<u64>,
     {
         fn deserialize<D: serde::Deserializer<'a>>(d: D) -> Result<Self, D::Error> {
@@ -558,7 +564,7 @@ mod impl_serde {
 
     impl<T> Serialize for BitFlags<T>
     where
-        T: RawBitFlags,
+        T: BitFlag,
         T::Type: Serialize,
     {
         fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
